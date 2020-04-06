@@ -73,7 +73,7 @@ ExternalProject_Add(moltenvk
     # Travis CI.
     EXCLUDE_FROM_ALL ON
     GIT_REPOSITORY https://github.com/KhronosGroup/MoltenVK.git
-    GIT_TAG v1.0.40
+    GIT_TAG v1.0.41
     GIT_PROGRESS ON
     PATCH_COMMAND cd <SOURCE_DIR> && ./fetchDependencies
     UPDATE_COMMAND ""
