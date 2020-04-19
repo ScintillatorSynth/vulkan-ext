@@ -1,14 +1,8 @@
-# Standalone cmake project to build and install Vulkan build time dependencies. This is only for MacOS, because of
-# its lack of native support for Vulkan is not likely to have a Vulkan loader installed, so we build and include the
-# parts of the Vulkan SDK that Sinctillator relies on.
+# Standalone cmake project to build and install Vulkan build time dependencies.
 include(ExternalProject)
 cmake_policy(SET CMP0048 NEW)
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_BUILD_TYPE "Release")
-
-if (NOT APPLE)
-    message(FATAL_ERROR "vulkan-dev for macOS only")
-endif()
 
 project(vulkan-dev VERSION 0.0.1)
 
@@ -53,6 +47,12 @@ ExternalProject_Add(shaderc
     CMAKE_GENERATOR Ninja
 )
 
+if (APPLE)
+    set(SCIN_VVL_INSTALL cp <BINARY_DIR>/layers/libVkLayer_khronos_validation.dylib ${INSTALL_EXT_DIR}/lib/.)
+elseif(UNIX)
+    set(SVIN_VVL_INSTALL cp <BINARY_DIR>/layers/libVkLayer_khronos_validation.so ${INSTALL_EXT_DIR}/lib/.)
+endif()
+
 ExternalProject_Add(vulkan-validationlayers
     PREFIX ext
     STEP_TARGETS install
@@ -62,10 +62,11 @@ ExternalProject_Add(vulkan-validationlayers
     GIT_PROGRESS ON
     UPDATE_COMMAND ""
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_EXT_DIR} -DVULKAN_HEADERS_INSTALL_DIR=${INSTALL_EXT_DIR} -DGLSLANG_INSTALL_DIR=${INSTALL_EXT_DIR} -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-    INSTALL_COMMAND cp <BINARY_DIR>/layers/libVkLayer_khronos_validation.dylib ${INSTALL_EXT_DIR}/lib/.
+    INSTALL_COMMAND ${SCIN_VVL_INSTALL}
     CMAKE_GENERATOR "Unix Makefiles"
 )
 
+if (APPLE)
 ExternalProject_Add(moltenvk
     PREFIX ext
     STEP_TARGETS install
@@ -82,4 +83,5 @@ ExternalProject_Add(moltenvk
     BUILD_COMMAND xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (macOS only)" build
     INSTALL_COMMAND cp <SOURCE_DIR>/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib ${INSTALL_EXT_DIR}/lib/.
 )
+endif()
 
