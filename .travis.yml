@@ -6,6 +6,7 @@ matrix:
           dist: bionic
         - os: osx
           osx_image: xcode11.1
+        - os: windows
 
 before_install:
     - $TRAVIS_BUILD_DIR/.travis/before-install-$TRAVIS_OS_NAME.sh
@@ -20,8 +21,16 @@ script:
 
 before_deploy:
     - mkdir -p $HOME/binaries/vulkan-ext
-    - cd $TRAVIS_BUILD_DIR/build/install-ext && tar czf $HOME/binaries/vulkan-ext/vulkan-ext-$TRAVIS_OS_NAME-$TRAVIS_COMMIT.tgz *
-    - cd $HOME/binaries/vulkan-ext && shasum -a 256 -b vulkan-ext-$TRAVIS_OS_NAME-$TRAVIS_COMMIT.tgz > $HOME/binaries/vulkan-ext/vulkan-ext-$TRAVIS_OS_NAME-$TRAVIS_COMMIT.sha256
+    - export TARBALL=vulkan-ext-$TRAVIS_OS_NAME-$TRAVIS_COMMIT.tgz
+    - export HASHFILE=$HOME/binaries/vulkan-ext/vulkan-ext-$TRAVIS_OS_NAME-$TRAVIS_COMMIT.sha256
+    - cd $TRAVIS_BUILD_DIR/build/install-ext && tar czf $HOME/binaries/vulkan-ext/$TARBALL *
+    - |-
+        cd $HOME/binaries/vulkan-ext
+        if [[ $TRAVIS_OS_NAME = "windows" ]]; then
+            certutil -hashfile $TARBALL SHA256 | sed -n '2,2p;2q' > $HASHFILE
+        else
+            shasum -a 256 -b $TARBALL > $HASHFILE
+        fi
     - export S3_URL='http://scintillator-synth-coverage.s3-website-us-west-1.amazonaws.com/binaries/vulkan-ext/vulkan-ext-'$TRAVIS_OS_NAME'-'$TRAVIS_COMMIT'.tgz'
     - export FWD_HTML='<html><head><meta http-equiv="refresh" content="0; url='$S3_URL'" /></head></html>'
     - echo $FWD_HTML > $HOME/binaries/vulkan-ext/vulkan-ext-$TRAVIS_OS_NAME-latest.html
